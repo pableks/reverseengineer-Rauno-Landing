@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -25,11 +25,40 @@ const OrthographicGridHomepage = () => {
   const synthRef = useRef(null);
   const reverbRef = useRef(null);
 
-  const [reverbLevel, setReverbLevel] = useState(0.5);
+  
   const [volume, setVolume] = useState(-12);
-  const [reverbDecay, setReverbDecay] = useState(5);
+  const [reverbDecay, setReverbDecay] = useState(30);
   const [reverbPreDelay, setReverbPreDelay] = useState(0.1);
-  const [reverbWet, setReverbWet] = useState(0.5);
+  const [reverbWet, setReverbWet] = useState(1);
+
+  const debounceTimeoutRef = useRef(null);
+
+  const updateReverb = useCallback(() => {
+    if (synthRef.current && reverbRef.current) {
+      // Disconnect the old reverb
+      synthRef.current.disconnect(reverbRef.current);
+      reverbRef.current.dispose();
+
+      // Create a new reverb with updated parameters
+      reverbRef.current = new Tone.Reverb({
+        decay: reverbDecay,
+        preDelay: reverbPreDelay,
+        wet: reverbWet
+      }).toDestination();
+
+      // Connect the synth to the new reverb
+      synthRef.current.connect(reverbRef.current);
+    }
+  }, [reverbDecay, reverbPreDelay, reverbWet]);
+
+  const debouncedUpdateReverb = useCallback(() => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    debounceTimeoutRef.current = setTimeout(() => {
+      updateReverb();
+    }, 100); // Debounce for 100ms
+  }, [updateReverb]);
 
   useEffect(() => {
      // Initialize Tone.js
@@ -244,6 +273,9 @@ const OrthographicGridHomepage = () => {
       mount.removeChild(renderer.domElement);
       synthRef.current.dispose();
       reverbRef.current.dispose();
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
 
     };
   }, []);
@@ -255,6 +287,10 @@ const OrthographicGridHomepage = () => {
       reverbRef.current.wet.value = reverbWet;
     }
   }, [reverbDecay, reverbPreDelay, reverbWet]);
+
+  useEffect(() => {
+    debouncedUpdateReverb();
+  }, [reverbDecay, reverbPreDelay, reverbWet, debouncedUpdateReverb]);
 
   useEffect(() => {
     if (synthRef.current) {
@@ -296,6 +332,7 @@ const OrthographicGridHomepage = () => {
             step="0.1"
             value={reverbDecay}
             onChange={(e) => setReverbDecay(parseFloat(e.target.value))}
+            onMouseDown={(event) => event.stopPropagation()}
           />
         </div>
         <div>
@@ -308,6 +345,7 @@ const OrthographicGridHomepage = () => {
             step="0.01"
             value={reverbPreDelay}
             onChange={(e) => setReverbPreDelay(parseFloat(e.target.value))}
+            onMouseDown={(event) => event.stopPropagation()}
           />
         </div>
         <div>
@@ -320,6 +358,7 @@ const OrthographicGridHomepage = () => {
             step="0.01"
             value={reverbWet}
             onChange={(e) => setReverbWet(parseFloat(e.target.value))}
+            onMouseDown={(event) => event.stopPropagation()}
           />
         </div>
         <div>
@@ -332,6 +371,7 @@ const OrthographicGridHomepage = () => {
             step="1"
             value={volume}
             onChange={(e) => setVolume(parseFloat(e.target.value))}
+            onMouseDown={(event) => event.stopPropagation()}
           />
         </div>
       </div>
