@@ -1,0 +1,28 @@
+---
+import Layout from '../layouts/Layout.astro';
+import OrthographicGridHomepage from '../components/OrthographicGridHomepage';
+---
+
+<Layout title="Orthographic Grid Homepage">
+	<OrthographicGridHomepage client:load />
+</Layout>
+
+<style>
+	:root {
+		--accent: 136, 58, 234;
+		--accent-light: 224, 204, 250;
+		--accent-dark: 49, 10, 101;
+		--accent-gradient: linear-gradient(
+			45deg,
+			rgb(var(--accent)),
+			rgb(var(--accent-light)) 30%,
+			white 60%
+		);
+	}
+	html, body {
+		margin: 0;
+		padding: 0;
+		height: 100%;
+		overflow: hidden;
+	}
+</style>
