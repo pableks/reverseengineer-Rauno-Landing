@@ -67,27 +67,44 @@ const OrthographicGridHomepage = () => {
 
     const loader = new FontLoader();
     loader.load('/font.json', (font) => {
-      const textGeometry = new TextGeometry('trypablo', {
-        font: font,
-        size: 10,
-        height: 1,
-        curveSegments: 12,
-        bevelEnabled: false,
-      });
+      // Function to create text mesh
+      const createTextMesh = (text, size) => {
+        const textGeometry = new TextGeometry(text, {
+          font: font,
+          size: size,
+          height: 1,
+          curveSegments: 12,
+          bevelEnabled: false,
+        });
+        
+        const textMaterial = new THREE.MeshBasicMaterial({ color: 0xA084E8 });
+        const textMesh = new THREE.Mesh(textGeometry, textMaterial);
 
-      const textMaterial = new THREE.MeshBasicMaterial({ color: 0xA084E8 });
+        textGeometry.computeBoundingBox();
+        const textWidth = textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x;
+        textMesh.position.set(-textWidth / 1.5, 0, 0);
+        textMesh.rotation.x = Math.PI / -2;
 
-      const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+        return textMesh;
+      };
 
-      // Center the text
-      textGeometry.computeBoundingBox();
-      const textWidth = textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x;
-      textMesh.position.set(-textWidth / 2, 0, 0); // Adjust Y position as needed
-      textMesh.rotation.x = Math.PI / -2; // Rotate 90 degrees around the Y-axis
+      // Create "trypablo" text
+      const trypabloMesh = createTextMesh('trypab', 16);
+      scene.add(trypabloMesh);
 
-      // Add text to the scene
-      scene.add(textMesh);
+      // Create "lo" text
+      const loMesh = createTextMesh('lo', 16);
+      
+      // Position "lo" text relative to "trypablo"
+      trypabloMesh.geometry.computeBoundingBox();
+      const trypabloWidth = trypabloMesh.geometry.boundingBox.max.x - trypabloMesh.geometry.boundingBox.min.x;
+      loMesh.position.set(trypabloWidth /   3, 0, 0); // Adjust the '2' value to change spacing between texts
+      
+      scene.add(loMesh);
     });
+
+    
+    
 
     
 
@@ -144,7 +161,7 @@ const OrthographicGridHomepage = () => {
     // Add Vignette pass
     const vignettePass = new ShaderPass(VignetteShader);
     vignettePass.uniforms['offset'].value = 0.95;
-    vignettePass.uniforms['darkness'].value = 1.6;
+    vignettePass.uniforms['darkness'].value = 1.4;
     composer.addPass(vignettePass);
 
     const fxaaPass = new ShaderPass(FXAAShader);
@@ -153,10 +170,10 @@ const OrthographicGridHomepage = () => {
     composerRef.current = composer;
 
     // Grid
-    const size = 300;
-    const divisions = 40;
+    const size = 240;
+    const divisions = 45;
     const gridColor = new THREE.Color(0xFFFFFF); // Color for grid lines
-    const crossColor = new THREE.Color(0xBABABA); // Color for corner crosses
+    const crossColor = new THREE.Color(0xBDBDBD); // Color for corner crosses
 
     // Combine grid lines and crosses into one geometry
     const gridAndCrossGeometry = new THREE.BufferGeometry();
@@ -175,12 +192,12 @@ const OrthographicGridHomepage = () => {
       
       // Add colors for main grid lines (using gridColor)
       for (let j = 0; j < 4; j++) {
-        combinedColors.push(gridColor.r, gridColor.g, gridColor.b, 0.2); // Grid line color
+        combinedColors.push(gridColor.r, gridColor.g, gridColor.b, 0.15); // Grid line color
       }
     }
 
     // Create corner crosses
-    const crossSize = size / divisions / 7;
+    const crossSize = size / divisions / 6;
     const crossYPosition = 0.01; // Slightly above the grid
 
     for (let i = 0; i <= divisions; i++) {
@@ -197,7 +214,7 @@ const OrthographicGridHomepage = () => {
 
         // Add colors for corner crosses (using crossColor)
         for (let k = 0; k < 4; k++) {
-          combinedColors.push(crossColor.r, crossColor.g, crossColor.b, 0.7); // Cross color
+          combinedColors.push(crossColor.r, crossColor.g, crossColor.b, 0.4); // Cross color
         }
       }
     }
@@ -214,7 +231,7 @@ const OrthographicGridHomepage = () => {
     const material = new THREE.LineBasicMaterial({
       vertexColors: true,
       transparent: true,
-      opacity: 0.3
+      opacity: 0.7
     });
 
     // Create the mesh and add it to the scene
@@ -249,7 +266,7 @@ const OrthographicGridHomepage = () => {
 
     
     // Camera position
-    camera.position.set(50, 35, 50);
+    camera.position.set(30, 35, 50);
     camera.lookAt(0, 0, 0);
 
     // Animation
