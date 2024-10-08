@@ -122,17 +122,82 @@ const OrthographicGridHomepage = () => {
 
     // Grid
     const size = 300;
-    const divisions = 40;
-    const gridHelper = new THREE.GridHelper(size, divisions, 0xffffff, 0xffffff);
-    gridHelper.position.y = 0;
-    scene.add(gridHelper);
+const divisions = 40;
+const gridColor = new THREE.Color(0xFFFFFF); // Color for grid lines
+const crossColor = new THREE.Color(0xBABABA); // Color for corner crosses
+
+// Combine grid lines and crosses into one geometry
+const gridAndCrossGeometry = new THREE.BufferGeometry();
+const combinedPositions = [];
+const combinedColors = [];
+
+// Create main grid lines
+for (let i = 0; i <= divisions; i++) {
+  const position = (i / divisions - 0.5) * size;
+  
+  // Vertical lines
+  combinedPositions.push(position, 0, -size / 2, position, 0, size / 2);
+  
+  // Horizontal lines
+  combinedPositions.push(-size / 2, 0, position, size / 2, 0, position);
+  
+  // Add colors for main grid lines (using gridColor)
+  for (let j = 0; j < 4; j++) {
+    combinedColors.push(gridColor.r, gridColor.g, gridColor.b, 0.2); // Grid line color
+  }
+}
+
+// Create corner crosses
+const crossSize = size / divisions / 7;
+const crossYPosition = 0.01; // Slightly above the grid
+
+for (let i = 0; i <= divisions; i++) {
+  for (let j = 0; j <= divisions; j++) {
+    const x = (i / divisions - 0.5) * size;
+    const z = (j / divisions - 0.5) * size;
+
+    combinedPositions.push(
+      x - crossSize, crossYPosition, z,
+      x + crossSize, crossYPosition, z,
+      x, crossYPosition, z - crossSize,
+      x, crossYPosition, z + crossSize
+    );
+
+    // Add colors for corner crosses (using crossColor)
+    for (let k = 0; k < 4; k++) {
+      combinedColors.push(crossColor.r, crossColor.g, crossColor.b, 0.7); // Cross color
+    }
+  }
+}
+
+// Convert positions and colors arrays into Float32Arrays for the geometry
+const positions = new Float32Array(combinedPositions);
+const colors = new Float32Array(combinedColors);
+
+// Set positions and colors attributes for the BufferGeometry
+gridAndCrossGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+gridAndCrossGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 4));
+
+// Create a material that uses vertex colors
+const material = new THREE.LineBasicMaterial({
+  vertexColors: true,
+  transparent: true,
+});
+
+// Create the mesh and add it to the scene
+const gridAndCross = new THREE.LineSegments(gridAndCrossGeometry, material);
+scene.add(gridAndCross);
+
+
+      
 
     // Create individual tiles for hovering
     const tileMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0 });
     const tiles = [];
+    const tileSize = (size / divisions) * 0.94; // Make tiles 90% of the grid cell size
     for (let i = 0; i < divisions; i++) {
       for (let j = 0; j < divisions; j++) {
-        const geometry = new THREE.PlaneGeometry(size / divisions, size / divisions);
+        const geometry = new THREE.PlaneGeometry(tileSize, tileSize);
         const tile = new THREE.Mesh(geometry, tileMaterial.clone());
         tile.position.set(
           (i - divisions / 2 + 0.5) * (size / divisions),
@@ -149,7 +214,7 @@ const OrthographicGridHomepage = () => {
     tilesRef.current = tiles;
 
     // Camera position
-    camera.position.set(50, 40, 50);
+    camera.position.set(50, 35, 50);
     camera.lookAt(0, 0, 0);
 
     // Animation

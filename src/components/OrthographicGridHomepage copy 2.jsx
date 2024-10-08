@@ -122,60 +122,74 @@ const OrthographicGridHomepage = () => {
 
     // Grid
     const size = 300;
-    const divisions = 40;
-    const gridMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        uSize: { value: size },
-        uDivisions: { value: divisions },
-        uColor: { value: new THREE.Color(0xCCCCCC) },
-        uOpacity: { value: 0.3 },
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform float uSize;
-        uniform float uDivisions;
-        uniform vec3 uColor;
-        uniform float uOpacity;
-        varying vec2 vUv;
-        
-        float getGrid(vec2 st, float res) {
-          vec2 grid = fract(st * res);
-          return (step(res, grid.x) * step(res, grid.y));
-        }
-        
-        void main() {
-          vec2 st = vUv * uSize - uSize / 2.0;
-          float cellSize = uSize / uDivisions;
-          
-          float mainGrid = 1.0 - getGrid(st, 1.0 / cellSize);
-          float subGrid = 1.0 - getGrid(st, 4.0 / cellSize);
-          
-          float finalOpacity = (mainGrid * 0.5 + subGrid * 0.1) * uOpacity;
-          gl_FragColor = vec4(uColor, finalOpacity);
-        }
-      `,
-      transparent: true,
-      depthWrite: false,
-    });
+const divisions = 40;
+const mainGridColor = new THREE.Color(0xCCCCCC);
+const cornerCrossColor = new THREE.Color(0xFFFFFF);
 
-    const gridGeometry = new THREE.PlaneGeometry(size, size);
-    const gridMesh = new THREE.Mesh(gridGeometry, gridMaterial);
-    gridMesh.rotation.x = -Math.PI / 2;
-    gridMesh.position.y = 0.01;
-    scene.add(gridMesh);
+const mainGridMaterial = new THREE.LineBasicMaterial({ 
+  color: mainGridColor, 
+  transparent: true, 
+  opacity: 0.3 
+});
+const cornerCrossMaterial = new THREE.LineBasicMaterial({ 
+  color: cornerCrossColor, 
+  transparent: true, 
+  opacity: 0.6 
+});
+
+const gridGroup = new THREE.Group();
+
+// Create main grid lines
+for (let i = 0; i <= divisions; i++) {
+  const position = (i / divisions - 0.5) * size;
+  const verticalLine = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(position, 0, -size / 2),
+      new THREE.Vector3(position, 0, size / 2)
+    ]),
+    mainGridMaterial
+  );
+  const horizontalLine = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-size / 2, 0, position),
+      new THREE.Vector3(size / 2, 0, position)
+    ]),
+    mainGridMaterial
+  );
+  gridGroup.add(verticalLine, horizontalLine);
+}
+
+// Create corner crosses
+const crossSize = size / divisions / 4;
+for (let i = 0; i <= divisions; i++) {
+  for (let j = 0; j <= divisions; j++) {
+    const x = (i / divisions - 0.5) * size;
+    const z = (j / divisions - 0.5) * size;
+    const cross = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(x - crossSize, 0, z),
+        new THREE.Vector3(x + crossSize, 0, z),
+        new THREE.Vector3(x, 0, z),
+        new THREE.Vector3(x, 0, z - crossSize),
+        new THREE.Vector3(x, 0, z + crossSize)
+      ]),
+      cornerCrossMaterial
+    );
+    gridGroup.add(cross);
+  }
+}
+
+scene.add(gridGroup);
+    
+      
 
     // Create individual tiles for hovering
     const tileMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0 });
     const tiles = [];
+    const tileSize = (size / divisions) * 0.94; // Make tiles 90% of the grid cell size
     for (let i = 0; i < divisions; i++) {
       for (let j = 0; j < divisions; j++) {
-        const geometry = new THREE.PlaneGeometry(size / divisions, size / divisions);
+        const geometry = new THREE.PlaneGeometry(tileSize, tileSize);
         const tile = new THREE.Mesh(geometry, tileMaterial.clone());
         tile.position.set(
           (i - divisions / 2 + 0.5) * (size / divisions),
