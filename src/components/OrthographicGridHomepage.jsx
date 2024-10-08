@@ -7,6 +7,9 @@ import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
 import { VignetteShader } from 'three/examples/jsm/shaders/VignetteShader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+import {Slider} from "@nextui-org/slider";
+import IOSVolumeSlider from './Slider'; // Import the custom slider component
+
 import * as Tone from 'tone';
 
 
@@ -103,13 +106,6 @@ const OrthographicGridHomepage = () => {
       scene.add(loMesh);
     });
 
-    
-    
-
-    
-
-    
-    
      // Initialize Tone.js
      synthRef.current = new Tone.PolySynth(Tone.Synth).toDestination();
      reverbRef.current = new Tone.Reverb({
@@ -199,19 +195,20 @@ const OrthographicGridHomepage = () => {
     // Create corner crosses
     const crossSize = size / divisions / 6;
     const crossYPosition = 0.01; // Slightly above the grid
-
-    for (let i = 0; i <= divisions; i++) {
-      for (let j = 0; j <= divisions; j++) {
+    const crossInterval = 2; // Crosses appear every 4 tiles
+    
+    for (let i = 0; i <= divisions; i += crossInterval) {
+      for (let j = 0; j <= divisions; j += crossInterval) {
         const x = (i / divisions - 0.5) * size;
         const z = (j / divisions - 0.5) * size;
-
+    
         combinedPositions.push(
           x - crossSize, crossYPosition, z,
           x + crossSize, crossYPosition, z,
           x, crossYPosition, z - crossSize,
           x, crossYPosition, z + crossSize
         );
-
+    
         // Add colors for corner crosses (using crossColor)
         for (let k = 0; k < 4; k++) {
           combinedColors.push(crossColor.r, crossColor.g, crossColor.b, 0.4); // Cross color
@@ -417,81 +414,71 @@ const OrthographicGridHomepage = () => {
 
   return (
     <div ref={mountRef} style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
+      
       <div style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        textAlign: 'center',
-        color: 'white',
-        fontFamily: 'Arial, sans-serif',
-        zIndex: 10
-      }}>
-        <h1>Welcome to My Grid Universe</h1>
-        <p>Explore the infinite possibilities</p>
-        <p>Click and drag to rotate the grid and hear the D# minor scale!</p>
-      </div>
-      <div style={{
-        position: 'absolute',
-        bottom: '20px',
-        left: '20px',
-        color: 'white',
-        fontFamily: 'Arial, sans-serif',
-        zIndex: 10
-      }}>
-        <div>
+  position: 'absolute',
+  bottom: '20px',
+  left: '20px',
+  color: 'white',
+  fontFamily: 'Arial, sans-serif',
+  zIndex: 10,
+  width: '300px'  // Adjust this value as needed
+}}>
+  <div>
           <label htmlFor="reverbDecay">Reverb Decay: </label>
-          <input
-            type="range"
-            id="reverbDecay"
-            min="1"
-            max="30"
-            step="0.1"
+          <IOSVolumeSlider
             value={reverbDecay}
-            onChange={(e) => setReverbDecay(parseFloat(e.target.value))}
-            onMouseDown={(event) => event.stopPropagation()}
+            onChange={setReverbDecay}
+            min={1}
+            max={30}
+            step={0.1}
+            
+
           />
         </div>
-        <div>
-          <label htmlFor="reverbPreDelay">Reverb Pre-Delay: </label>
-          <input
-            type="range"
-            id="reverbPreDelay"
-            min="0"
-            max="1"
-            step="0.01"
-            value={reverbPreDelay}
-            onChange={(e) => setReverbPreDelay(parseFloat(e.target.value))}
-            onMouseDown={(event) => event.stopPropagation()}
-          />
-        </div>
-        <div>
-          <label htmlFor="reverbWet">Reverb Wet/Dry: </label>
-          <input
-            type="range"
-            id="reverbWet"
-            min="0"
-            max="1"
-            step="0.01"
-            value={reverbWet}
-            onChange={(e) => setReverbWet(parseFloat(e.target.value))}
-            onMouseDown={(event) => event.stopPropagation()}
-          />
-        </div>
-        <div>
-          <label htmlFor="volume">Volume: </label>
-          <input
-            type="range"
-            id="volume"
-            min="-60"
-            max="0"
-            step="1"
-            value={volume}
-            onChange={(e) => setVolume(parseFloat(e.target.value))}
-            onMouseDown={(event) => event.stopPropagation()}
-          />
-        </div>
-      </div>
+  <div>
+    <label htmlFor="reverbPreDelay">Reverb Pre-Delay: </label>
+    <Slider
+      aria-label="Reverb Pre-Delay"
+      color="success"
+      hideThumb={true}
+      step={0.01}
+      minValue={0}
+      maxValue={1}
+      value={reverbPreDelay}
+      onChange={(value) => setReverbPreDelay(value)}
+      className="max-w-md"
+    />
+  </div>
+  <div>
+    <label htmlFor="reverbWet">Reverb Wet/Dry: </label>
+    <Slider
+      aria-label="Reverb Wet/Dry"
+      color="success"
+      hideThumb={true}
+      step={0.01}
+      minValue={0}
+      maxValue={1}
+      value={reverbWet}
+      onChange={(value) => setReverbWet(value)}
+      className="max-w-md"
+    />
+  </div>
+  <div>
+    <label htmlFor="volume">Volume: </label>
+    <Slider
+      aria-label="Volume"
+      color="success"
+      hideThumb={true}
+      step={1}
+      minValue={-60}
+      maxValue={0}
+      value={volume}
+      onChange={(value) => setVolume(value)}
+      className="max-w-md"
+    />
+  </div>
+</div>
     </div>
       
   );
