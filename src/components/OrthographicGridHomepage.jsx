@@ -5,6 +5,8 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
 import { VignetteShader } from 'three/examples/jsm/shaders/VignetteShader.js';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import * as Tone from 'tone';
 
 
@@ -61,6 +63,36 @@ const OrthographicGridHomepage = () => {
   }, [updateReverb]);
 
   useEffect(() => {
+
+
+    const loader = new FontLoader();
+    loader.load('/font.json', (font) => {
+      const textGeometry = new TextGeometry('trypablo', {
+        font: font,
+        size: 10,
+        height: 1,
+        curveSegments: 12,
+        bevelEnabled: false,
+      });
+
+      const textMaterial = new THREE.MeshBasicMaterial({ color: 0xA084E8 });
+
+      const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+
+      // Center the text
+      textGeometry.computeBoundingBox();
+      const textWidth = textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x;
+      textMesh.position.set(-textWidth / 2, 0, 0); // Adjust Y position as needed
+      textMesh.rotation.x = Math.PI / -2; // Rotate 90 degrees around the Y-axis
+
+      // Add text to the scene
+      scene.add(textMesh);
+    });
+
+    
+
+    
+    
      // Initialize Tone.js
      synthRef.current = new Tone.PolySynth(Tone.Synth).toDestination();
      reverbRef.current = new Tone.Reverb({
@@ -122,71 +154,72 @@ const OrthographicGridHomepage = () => {
 
     // Grid
     const size = 300;
-const divisions = 40;
-const gridColor = new THREE.Color(0xFFFFFF); // Color for grid lines
-const crossColor = new THREE.Color(0xBABABA); // Color for corner crosses
+    const divisions = 40;
+    const gridColor = new THREE.Color(0xFFFFFF); // Color for grid lines
+    const crossColor = new THREE.Color(0xBABABA); // Color for corner crosses
 
-// Combine grid lines and crosses into one geometry
-const gridAndCrossGeometry = new THREE.BufferGeometry();
-const combinedPositions = [];
-const combinedColors = [];
+    // Combine grid lines and crosses into one geometry
+    const gridAndCrossGeometry = new THREE.BufferGeometry();
+    const combinedPositions = [];
+    const combinedColors = [];
 
-// Create main grid lines
-for (let i = 0; i <= divisions; i++) {
-  const position = (i / divisions - 0.5) * size;
-  
-  // Vertical lines
-  combinedPositions.push(position, 0, -size / 2, position, 0, size / 2);
-  
-  // Horizontal lines
-  combinedPositions.push(-size / 2, 0, position, size / 2, 0, position);
-  
-  // Add colors for main grid lines (using gridColor)
-  for (let j = 0; j < 4; j++) {
-    combinedColors.push(gridColor.r, gridColor.g, gridColor.b, 0.2); // Grid line color
-  }
-}
-
-// Create corner crosses
-const crossSize = size / divisions / 7;
-const crossYPosition = 0.01; // Slightly above the grid
-
-for (let i = 0; i <= divisions; i++) {
-  for (let j = 0; j <= divisions; j++) {
-    const x = (i / divisions - 0.5) * size;
-    const z = (j / divisions - 0.5) * size;
-
-    combinedPositions.push(
-      x - crossSize, crossYPosition, z,
-      x + crossSize, crossYPosition, z,
-      x, crossYPosition, z - crossSize,
-      x, crossYPosition, z + crossSize
-    );
-
-    // Add colors for corner crosses (using crossColor)
-    for (let k = 0; k < 4; k++) {
-      combinedColors.push(crossColor.r, crossColor.g, crossColor.b, 0.7); // Cross color
+    // Create main grid lines
+    for (let i = 0; i <= divisions; i++) {
+      const position = (i / divisions - 0.5) * size;
+      
+      // Vertical lines
+      combinedPositions.push(position, 0, -size / 2, position, 0, size / 2);
+      
+      // Horizontal lines
+      combinedPositions.push(-size / 2, 0, position, size / 2, 0, position);
+      
+      // Add colors for main grid lines (using gridColor)
+      for (let j = 0; j < 4; j++) {
+        combinedColors.push(gridColor.r, gridColor.g, gridColor.b, 0.2); // Grid line color
+      }
     }
-  }
-}
 
-// Convert positions and colors arrays into Float32Arrays for the geometry
-const positions = new Float32Array(combinedPositions);
-const colors = new Float32Array(combinedColors);
+    // Create corner crosses
+    const crossSize = size / divisions / 7;
+    const crossYPosition = 0.01; // Slightly above the grid
 
-// Set positions and colors attributes for the BufferGeometry
-gridAndCrossGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-gridAndCrossGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 4));
+    for (let i = 0; i <= divisions; i++) {
+      for (let j = 0; j <= divisions; j++) {
+        const x = (i / divisions - 0.5) * size;
+        const z = (j / divisions - 0.5) * size;
 
-// Create a material that uses vertex colors
-const material = new THREE.LineBasicMaterial({
-  vertexColors: true,
-  transparent: true,
-});
+        combinedPositions.push(
+          x - crossSize, crossYPosition, z,
+          x + crossSize, crossYPosition, z,
+          x, crossYPosition, z - crossSize,
+          x, crossYPosition, z + crossSize
+        );
 
-// Create the mesh and add it to the scene
-const gridAndCross = new THREE.LineSegments(gridAndCrossGeometry, material);
-scene.add(gridAndCross);
+        // Add colors for corner crosses (using crossColor)
+        for (let k = 0; k < 4; k++) {
+          combinedColors.push(crossColor.r, crossColor.g, crossColor.b, 0.7); // Cross color
+        }
+      }
+    }
+
+    // Convert positions and colors arrays into Float32Arrays for the geometry
+    const positions = new Float32Array(combinedPositions);
+    const colors = new Float32Array(combinedColors);
+
+    // Set positions and colors attributes for the BufferGeometry
+    gridAndCrossGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    gridAndCrossGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 4));
+
+    // Create a material that uses vertex colors
+    const material = new THREE.LineBasicMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.3
+    });
+
+    // Create the mesh and add it to the scene
+    const gridAndCross = new THREE.LineSegments(gridAndCrossGeometry, material);
+    scene.add(gridAndCross);
 
 
       
@@ -213,6 +246,8 @@ scene.add(gridAndCross);
     }
     tilesRef.current = tiles;
 
+
+    
     // Camera position
     camera.position.set(50, 35, 50);
     camera.lookAt(0, 0, 0);
