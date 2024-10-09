@@ -7,6 +7,7 @@ import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
 import { VignetteShader } from 'three/examples/jsm/shaders/VignetteShader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+import { Slider } from "@/components/ui/slider";
 import * as Tone from 'tone';
 
 
@@ -29,9 +30,9 @@ const OrthographicGridHomepage = () => {
 
   
   const [volume, setVolume] = useState(-12);
-  const [reverbDecay, setReverbDecay] = useState(30);
-  const [reverbPreDelay, setReverbPreDelay] = useState(0.1);
-  const [reverbWet, setReverbWet] = useState(1);
+const [reverbDecay, setReverbDecay] = useState(30);
+const [reverbPreDelay, setReverbPreDelay] = useState(0.1);
+const [reverbWet, setReverbWet] = useState(1);
 
   const debounceTimeoutRef = useRef(null);
 
@@ -170,10 +171,10 @@ const OrthographicGridHomepage = () => {
     composerRef.current = composer;
 
     // Grid
-    const size = 240;
+    const size = 130;
     const divisions = 45;
     const gridColor = new THREE.Color(0xFFFFFF); // Color for grid lines
-    const crossColor = new THREE.Color(0xBDBDBD); // Color for corner crosses
+    const crossColor = new THREE.Color(0xBABABA); // Color for corner crosses
 
     // Combine grid lines and crosses into one geometry
     const gridAndCrossGeometry = new THREE.BufferGeometry();
@@ -192,29 +193,30 @@ const OrthographicGridHomepage = () => {
       
       // Add colors for main grid lines (using gridColor)
       for (let j = 0; j < 4; j++) {
-        combinedColors.push(gridColor.r, gridColor.g, gridColor.b, 0.15); // Grid line color
+        combinedColors.push(gridColor.r, gridColor.g, gridColor.b, 0.3); // Grid line color
       }
     }
 
     // Create corner crosses
-    const crossSize = size / divisions / 6;
+    const crossSize = size / divisions / 5;
     const crossYPosition = 0.01; // Slightly above the grid
-
-    for (let i = 0; i <= divisions; i++) {
-      for (let j = 0; j <= divisions; j++) {
+    const crossInterval = 2; // Crosses appear every 4 tiles
+    
+    for (let i = 0; i <= divisions; i += crossInterval) {
+      for (let j = 0; j <= divisions; j += crossInterval) {
         const x = (i / divisions - 0.5) * size;
         const z = (j / divisions - 0.5) * size;
-
+    
         combinedPositions.push(
           x - crossSize, crossYPosition, z,
           x + crossSize, crossYPosition, z,
           x, crossYPosition, z - crossSize,
           x, crossYPosition, z + crossSize
         );
-
+    
         // Add colors for corner crosses (using crossColor)
         for (let k = 0; k < 4; k++) {
-          combinedColors.push(crossColor.r, crossColor.g, crossColor.b, 0.4); // Cross color
+          combinedColors.push(crossColor.r, crossColor.g, crossColor.b, 0.8); // Cross color
         }
       }
     }
@@ -266,7 +268,7 @@ const OrthographicGridHomepage = () => {
 
     
     // Camera position
-    camera.position.set(30, 35, 50);
+    camera.position.set(45, 65, 80);
     camera.lookAt(0, 0, 0);
 
     // Animation
@@ -437,63 +439,69 @@ const OrthographicGridHomepage = () => {
         left: '20px',
         color: 'white',
         fontFamily: 'Arial, sans-serif',
-        zIndex: 10
+        zIndex: 10,
+        width: '300px'
       }}>
-        <div>
-          <label htmlFor="reverbDecay">Reverb Decay: </label>
-          <input
-            type="range"
-            id="reverbDecay"
-            min="1"
-            max="30"
-            step="0.1"
-            value={reverbDecay}
-            onChange={(e) => setReverbDecay(parseFloat(e.target.value))}
-            onMouseDown={(event) => event.stopPropagation()}
-          />
-        </div>
-        <div>
-          <label htmlFor="reverbPreDelay">Reverb Pre-Delay: </label>
-          <input
-            type="range"
-            id="reverbPreDelay"
-            min="0"
-            max="1"
-            step="0.01"
-            value={reverbPreDelay}
-            onChange={(e) => setReverbPreDelay(parseFloat(e.target.value))}
-            onMouseDown={(event) => event.stopPropagation()}
-          />
-        </div>
-        <div>
-          <label htmlFor="reverbWet">Reverb Wet/Dry: </label>
-          <input
-            type="range"
-            id="reverbWet"
-            min="0"
-            max="1"
-            step="0.01"
-            value={reverbWet}
-            onChange={(e) => setReverbWet(parseFloat(e.target.value))}
-            onMouseDown={(event) => event.stopPropagation()}
-          />
-        </div>
-        <div>
-          <label htmlFor="volume">Volume: </label>
-          <input
-            type="range"
-            id="volume"
-            min="-60"
-            max="0"
-            step="1"
-            value={volume}
-            onChange={(e) => setVolume(parseFloat(e.target.value))}
-            onMouseDown={(event) => event.stopPropagation()}
-          />
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="reverbDecay" className="block text-sm font-medium text-white">
+              Reverb Decay: {reverbDecay.toFixed(1)}
+            </label>
+            <Slider
+              id="reverbDecay"
+              min={1}
+              max={30}
+              step={0.1}
+              value={[reverbDecay]}
+              onValueChange={(value) => setReverbDecay(value[0])}
+              onMouseDown={(event) => event.stopPropagation()}
+            />
+          </div>
+          <div>
+            <label htmlFor="reverbPreDelay" className="block text-sm font-medium text-white">
+              Reverb Pre-Delay: {reverbPreDelay.toFixed(2)}
+            </label>
+            <Slider
+              id="reverbPreDelay"
+              min={0}
+              max={1}
+              step={0.01}
+              value={[reverbPreDelay]}
+              onValueChange={(value) => setReverbPreDelay(value[0])}
+              onMouseDown={(event) => event.stopPropagation()}
+            />
+          </div>
+          <div>
+            <label htmlFor="reverbWet" className="block text-sm font-medium text-white">
+              Reverb Wet/Dry: {reverbWet.toFixed(2)}
+            </label>
+            <Slider
+              id="reverbWet"
+              min={0}
+              max={1}
+              step={0.01}
+              value={[reverbWet]}
+              onValueChange={(value) => setReverbWet(value[0])}
+              onMouseDown={(event) => event.stopPropagation()}
+            />
+          </div>
+          <div>
+            <label htmlFor="volume" className="block text-sm font-medium text-white">
+              Volume: {volume.toFixed(0)}dB
+            </label>
+            <Slider
+              id="volume"
+              min={-60}
+              max={0}
+              step={1}
+              value={[volume]}
+              onValueChange={(value) => setVolume(value[0])}
+              onMouseDown={(event) => event.stopPropagation()}
+            />
+          </div>
         </div>
       </div>
     </div>
-      
   );
 };
 
